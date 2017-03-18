@@ -13,6 +13,7 @@ public class StressManager : MonoBehaviour
 	// units per second
 	public float colorAdaptionSecs = 0.1f;
 
+	public const float capacitySizeFactor = 50;
 
 	private Renderer rend;
 
@@ -25,8 +26,6 @@ public class StressManager : MonoBehaviour
 	{
 		rend = GetComponent<Renderer> ();
 		rend.material.color = currentColor;
-
-//		breathingController = GetComponent<BreathingController> ();
 	}
 
 
@@ -49,9 +48,10 @@ public class StressManager : MonoBehaviour
 		UpdateRedStress ();
 		UpdateBreathingSpeed ();
 		UpdateColors ();
+		UpdateSize ();
 	}
 
-	void UpdateColors()
+	void UpdateColors ()
 	{
 		float redDelta = (redStress / redStressCapacity) - inverseColor.r;
 		if (redDelta != 0) {
@@ -71,7 +71,7 @@ public class StressManager : MonoBehaviour
 		if (redStress != redStressCapacity) {
 			redStress -= redDecayUnitsPerSecond * Time.deltaTime;
 		} else {
-			// TODO fail here?
+			// TODO game over here?
 		}
 
 		redStress = Mathf.Max (redStress, 0);
@@ -79,6 +79,13 @@ public class StressManager : MonoBehaviour
 
 	void UpdateBreathingSpeed ()
 	{
-		breathingController.setSpeedFactor(redStress / redStressCapacity);
+		breathingController.setSpeedFactor (redStress / redStressCapacity);
+	}
+
+	void UpdateSize ()
+	{
+		float sizeRatio = redStressCapacity / capacitySizeFactor;
+		sizeRatio = Mathf.Log (sizeRatio + 1) + 0.5f;
+		breathingController.setBaseFactor (sizeRatio);
 	}
 }
