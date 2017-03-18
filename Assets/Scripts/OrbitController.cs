@@ -7,7 +7,7 @@ public class OrbitController : MonoBehaviour
 
 	public Vector3 orbitPoint;
 	public float radius = 2.5f;
-	public float speed = 1f; // 1 is instant match with mouse
+	public float speed = 0.2f; // 1 sec to match
 	public float inertia = 0;
 
 	// Might need to be computed in the future, but fixed is fine for now.
@@ -16,7 +16,7 @@ public class OrbitController : MonoBehaviour
 	// Use this for initialization
 	void Start ()
 	{
-		
+//		this.transform.position = this.transform.position * radius;
 	}
 
 	float computeSignedAngle (Vector3 targetDirectionVector)
@@ -36,12 +36,11 @@ public class OrbitController : MonoBehaviour
 		Vector3 targetDirectionVector = getInworldMousePosition ();
 
 		var deltaAngle = computeSignedAngle (targetDirectionVector);
+		deltaAngle *= Time.deltaTime / speed;
 
 		Quaternion quaternion = Quaternion.AngleAxis (deltaAngle, Vector3.up);
 
-		Debug.Log ("Angle:" + deltaAngle);
-
-		this.transform.position = quaternion * this.transform.position;
+		this.transform.position = quaternion * this.transform.position.normalized * radius;
 	}
 
 	private Vector3 getInworldMousePosition ()
