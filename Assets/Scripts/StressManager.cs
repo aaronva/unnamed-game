@@ -7,8 +7,8 @@ public class StressManager : MonoBehaviour
 
 	public float redStress { get; private set; }
 
-	public int redStressCapacity = 50;
-	public int redDecayUnitsPerSecond = 2;
+	public float redStressCapacity = 50f;
+	public float redDecayUnitsPerSecond = 2f;
 
 	// units per second
 	public float colorAdaptionSecs = 0.1f;
@@ -21,6 +21,12 @@ public class StressManager : MonoBehaviour
 	private Color inverseColor = Color.black;
 
 	public BreathingController breathingController;
+
+	private const float lightFlashIntensity = 6;
+	private const float lightFlashLength = 0.1f;
+	private const float growthFactor = 0.2f;
+
+	private float maxStressSinceGrowth = 0;
 
 	void Start ()
 	{
@@ -45,10 +51,11 @@ public class StressManager : MonoBehaviour
 
 	void Update ()
 	{
-		UpdateRedStress ();
+		UpdateStress ();
 		UpdateBreathingSpeed ();
 		UpdateColors ();
 		UpdateSize ();
+		updateLight ();
 	}
 
 	void UpdateColors ()
@@ -64,17 +71,25 @@ public class StressManager : MonoBehaviour
 		rend.material.color = currentColor;
 	}
 
-	void UpdateRedStress ()
+	void UpdateStress ()
 	{
 		redStress = Mathf.Min (redStress, redStressCapacity);
 
-		if (redStress != redStressCapacity) {
+		if (redStress > maxStressSinceGrowth) {
+			maxStressSinceGrowth = redStress;
+		}
+
+		if (redStress != redStressCapacity && redStress > 0) {
 			redStress -= redDecayUnitsPerSecond * Time.deltaTime;
 		} else {
 			// TODO game over here?
 		}
 
-		redStress = Mathf.Max (redStress, 0);
+		if (redStress < 0) {
+			triggerGrowth ();
+			redStress = 0;
+			maxStressSinceGrowth = 0;
+		}
 	}
 
 	void UpdateBreathingSpeed ()
@@ -87,5 +102,21 @@ public class StressManager : MonoBehaviour
 		float sizeRatio = redStressCapacity / capacitySizeFactor;
 		sizeRatio = Mathf.Log (sizeRatio + 1) + 0.5f;
 		breathingController.setBaseFactor (sizeRatio);
+	}
+
+	void updateLight ()
+	{
+		// TODO might need to put logic to pulse correctly in the future
+		Light light = GetComponent<Light> ();
+		if (light.intensity > 0) {
+			light.intensity -= lightFlashIntensity * Time.deltaTime / lightFlashLength;
+		}
+	}
+
+	void triggerGrowth ()
+	{
+		Light light = GetComponent<Light> ();
+		light.intensity = maxStressSinceGrowth / redStressCapacity * lightFlashIntensity;
+		redStressCapacity += maxStressSinceGrowth * growthFactor;
 	}
 }
