@@ -22,8 +22,13 @@ public class StressManager : MonoBehaviour
 
 	public BreathingController breathingController;
 
-	private const float lightFlashIntensity = 6;
-	private const float lightFlashLength = 0.1f;
+	private const float lightPeakIntensity = 3;
+	private const float lightIntensityIncreaseDuration = 0.2f;
+	private const float lightIntensityDecreaseDuration = 0.5f;
+
+	private bool lightIntensityIsIncreasing = false;
+	private float lightIntensityTarget;
+
 	private const float growthFactor = 0.2f;
 
 	private float maxStressSinceGrowth = 0;
@@ -32,6 +37,7 @@ public class StressManager : MonoBehaviour
 	{
 		rend = GetComponent<Renderer> ();
 		rend.material.color = currentColor;
+		redStress = 0;
 	}
 
 
@@ -66,26 +72,25 @@ public class StressManager : MonoBehaviour
 			inverseColor = new Color (newRed, inverseColor.g, inverseColor.b);
 		}
 
-		currentColor = new Color (1 - inverseColor.b - inverseColor.g, 1 - inverseColor.b - inverseColor.r, 1 - inverseColor.r - inverseColor.g);
+		currentColor = new Color (1 - inverseColor.b - inverseColor.g,
+			1 - inverseColor.b - inverseColor.r, 1 - inverseColor.r - inverseColor.g);
 
 		rend.material.color = currentColor;
 	}
 
 	void UpdateStress ()
 	{
-		redStress = Mathf.Min (redStress, redStressCapacity);
-
 		if (redStress > maxStressSinceGrowth) {
 			maxStressSinceGrowth = redStress;
 		}
 
-		if (redStress != redStressCapacity && redStress > 0) {
+		if (redStress < redStressCapacity && redStress > 0) {
 			redStress -= redDecayUnitsPerSecond * Time.deltaTime;
 		} else {
 			// TODO game over here?
 		}
 
-		if (redStress < 0) {
+		if (redStress <= 0 && maxStressSinceGrowth > 0) {
 			triggerGrowth ();
 			redStress = 0;
 			maxStressSinceGrowth = 0;
@@ -108,15 +113,25 @@ public class StressManager : MonoBehaviour
 	{
 		// TODO might need to put logic to pulse correctly in the future
 		Light light = GetComponent<Light> ();
-		if (light.intensity > 0) {
-			light.intensity -= lightFlashIntensity * Time.deltaTime / lightFlashLength;
+
+		if (lightIntensityIsIncreasing) {
+			light.intensity += Time.deltaTime * lightIntensityTarget / lightIntensityIncreaseDuration;
+			lightIntensityIsIncreasing = light.intensity < lightIntensityTarget;
+		} else if (light.intensity > 0) {
+			light.intensity -= Time.deltaTime * lightIntensityTarget;
 		}
 	}
 
 	void triggerGrowth ()
 	{
-		Light light = GetComponent<Light> ();
-		light.intensity = maxStressSinceGrowth / redStressCapacity * lightFlashIntensity;
+		triggerIntensityIncrease(maxStressSinceGrowth / redStressCapacity);
 		redStressCapacity += maxStressSinceGrowth * growthFactor;
+	}
+
+	void triggerIntensityIncrease (float percentage)
+	{
+		lightIntensityIsIncreasing = true;
+		// TODO possible log here?
+		lightIntensityTarget = percentage * lightPeakIntensity;
 	}
 }
