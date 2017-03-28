@@ -8,10 +8,11 @@ public class StressManager : MonoBehaviour
 	public float redStress { get; private set; }
 
 	public float redStressCapacity = 50f;
-	public float redDecayUnitsPerSecond = 2f;
+//	public float redDecayUnitsPerSecond = 2f;
+	public const float redStressDecayRatio = 0.05f;
 
 	// units per second
-	public float colorAdaptionSecs = 0.1f;
+	public float maxColorAdaptionSpeed = 0.1f;
 
 	public const float capacitySizeFactor = 50;
 
@@ -29,7 +30,7 @@ public class StressManager : MonoBehaviour
 	private bool lightIntensityIsIncreasing = false;
 	private float lightIntensityTarget;
 
-	private const float growthFactor = 0.2f;
+	public const float growthFactor = 0.2f;
 
 	private float maxStressSinceGrowth = 0;
 
@@ -68,7 +69,7 @@ public class StressManager : MonoBehaviour
 	{
 		float redDelta = (redStress / redStressCapacity) - inverseColor.r;
 		if (redDelta != 0) {
-			float newRed = inverseColor.r + redDelta * Time.deltaTime / colorAdaptionSecs;
+			float newRed = inverseColor.r + Mathf.Min(redDelta * Time.deltaTime, maxColorAdaptionSpeed);
 			inverseColor = new Color (newRed, inverseColor.g, inverseColor.b);
 		}
 
@@ -85,7 +86,7 @@ public class StressManager : MonoBehaviour
 		}
 
 		if (redStress < redStressCapacity && redStress > 0) {
-			redStress -= redDecayUnitsPerSecond * Time.deltaTime;
+			redStress -= redStressCapacity * redStressDecayRatio * Time.deltaTime;
 		} else {
 			// TODO game over here?
 		}
