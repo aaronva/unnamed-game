@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class StressorGeneratorController : MonoBehaviour
 {
-	public StressorController stressorTransform;
+	public StressorController stressorTemplate;
 	public float generatedRadius = 20f;
 
 	private static int generatedCount = 0;
@@ -18,7 +18,7 @@ public class StressorGeneratorController : MonoBehaviour
 
 			Vector3 spawnPoint = quaternion * new Vector3 (generatedRadius, 0, generatedRadius);
 
-			StressorController stressor = (StressorController)Instantiate (stressorTransform, spawnPoint, Quaternion.identity);
+			StressorController stressor = (StressorController)Instantiate (stressorTemplate, spawnPoint, Quaternion.identity);
 
 			stressor.applyForce (spawnPoint.normalized * -1 * computeInitialForce ());
 

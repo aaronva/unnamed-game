@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class StressorController : MonoBehaviour {
 	public int stressLevel = 10;
+	public GameObject creator = null;
 
 	public void applyForce(Vector3 force) {
 		Rigidbody rb = GetComponent<Rigidbody> ();
