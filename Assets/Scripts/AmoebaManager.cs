@@ -40,7 +40,7 @@ public class AmoebaManager : MonoBehaviour
 
 	private bool isLashingOut = false;
 	private float lastOutburst = 0;
-	public const float outburstFrequency = 3;
+	public const float baseOutburstFrequency = 3;
 	public const int numberStressorsProducedDuringOutburst = 5;
 
 	void Start ()
@@ -49,7 +49,6 @@ public class AmoebaManager : MonoBehaviour
 		rend.material.color = currentColor;
 		stressLevel = 0;
 	}
-
 
 	void OnTriggerEnter (Collider other)
 	{
@@ -67,16 +66,17 @@ public class AmoebaManager : MonoBehaviour
 
 		gameObject.SetActive (false);
 		stressLevel += stressor.stressLevel;
+		Destroy (gameObject);
 	}
 
 	void Update ()
 	{
+		UpdateLashout ();
 		UpdateStress ();
 		UpdateBreathingSpeed ();
 		UpdateColors ();
 		UpdateSize ();
 		UpdateLight ();
-		UpdateLashout ();
 	}
 
 	void UpdateColors ()
@@ -95,12 +95,17 @@ public class AmoebaManager : MonoBehaviour
 
 	void UpdateStress ()
 	{
-		if (stressLevel > maxStressSinceGrowth) {
-			maxStressSinceGrowth = stressLevel;
+		if (stressLevel >= redStressCapacity) {
+			maxCapacityReached ();
 		}
 
-		if (!isLashingOut && stressLevel >= redStressCapacity) {
-			maxCapacityReached ();
+		if (isLashingOut) {
+			// special logic will be done when lashing out
+			return;
+		}
+
+		if (stressLevel > maxStressSinceGrowth) {
+			maxStressSinceGrowth = stressLevel;
 		}
 
 		if (stressLevel < redStressCapacity && stressLevel > 0) {
@@ -145,11 +150,17 @@ public class AmoebaManager : MonoBehaviour
 			// Don't need to do work if we aren't lashing out.
 			return;
 		}
-			
-		if (Time.time - lastOutburst > 1 / outburstFrequency) {
+
+		float timeSinceLastOutburst = Time.time - lastOutburst;
+		float timeBetweenOutbursts = 1 / baseOutburstFrequency;
+
+		if (timeSinceLastOutburst > timeBetweenOutbursts) {
 			triggerOutburst ();
 			lastOutburst = Time.time;
 		}
+
+		float fluctuationScale = timeSinceLastOutburst / timeBetweenOutbursts * -2 * breathingController.fluctuation + 1;
+		this.transform.localScale = Vector3.one * breathingController.baseFactor * fluctuationScale;
 	}
 
 	void triggerGrowth ()
@@ -167,18 +178,29 @@ public class AmoebaManager : MonoBehaviour
 
 	private void maxCapacityReached ()
 	{
+		if (!isLashingOut) {
+			notifyListeners ();
+		}
+		stressLevel = redStressCapacity;
 		beginLashout ();
-		notifyListeners ();
 	}
 
 	private void beginLashout ()
 	{
 		isLashingOut = true;
+		breathingController.pauseBreathing ();
+	}
+
+	private void endLashout ()
+	{
+		isLashingOut = false;
+		breathingController.resumeBreathing ();
 	}
 
 	private void triggerOutburst ()
 	{
 		float increament = 360f / numberStressorsProducedDuringOutburst;
+		float outburstStressLevel = (float)redStressCapacity / 8;
 
 		for (int i = 0; i < numberStressorsProducedDuringOutburst; i++) {
 			float angle = increament * i;
@@ -190,6 +212,18 @@ public class AmoebaManager : MonoBehaviour
 				Instantiate (stressorTemplate, this.transform.position, Quaternion.identity);
 			stressor.applyForce (forceUnitVector * 220); // TODO replace hard coded force scalor
 			stressor.creator = this.gameObject;
+			stressor.setStressLevel (outburstStressLevel);
+
+			// Kill in 5 seconds
+			Destroy (stressor.gameObject, 1);
+		}
+
+		// TODO this should probably just be part of the breathingController
+		this.transform.localScale = Vector3.one * breathingController.baseFactor * (1 + breathingController.fluctuation);
+		stressLevel -= outburstStressLevel;
+
+		if (stressLevel < redStressCapacity / 2) {
+			endLashout ();
 		}
 	}
 

@@ -22,6 +22,9 @@ public class StressorGeneratorController : MonoBehaviour
 
 			stressor.applyForce (spawnPoint.normalized * -1 * computeInitialForce ());
 
+			// Kill the created stressors in 5 seconds.
+			Destroy (stressor.gameObject, 3);
+
 			generatedCount++;
 		}
 	}

@@ -10,10 +10,9 @@ public class BreathingController : MonoBehaviour
 	public float maxSpeed = 20;
 
 	public float speed { get; private set; }
+	public float baseFactor { get; private set; }
 
-	private float baseFactor;
 	private float passedEffectiveTime = 0;
-
 	private bool isPaused = false;
 
 	// Update is called once per frame
@@ -34,7 +33,11 @@ public class BreathingController : MonoBehaviour
 	public void resumeBreathing ()
 	{
 		float sizeFactor = this.transform.localScale.x / baseFactor;
-		passedEffectiveTime = Mathf.Asin((sizeFactor - 1 + fluctuation) / fluctuation) - Time.time;
+		float f = (sizeFactor - 1f) / fluctuation;
+		f = Mathf.Max (f, -1f);
+		f = Mathf.Min (f, 1f);
+		passedEffectiveTime = Mathf.Asin(f);
+		passedEffectiveTime -= Time.time;
 
 		isPaused = false;
 	}
