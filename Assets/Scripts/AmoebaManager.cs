@@ -11,10 +11,10 @@ public class AmoebaManager : MonoBehaviour
 
 	public float maxStressLevel = 50f;
 	// TODO remove this
-	public const float redStressDecayRatio = 0.05f;
+	public const float stressDecayRatio = 0.1f;
 
-	// units per second
-	public const float maxColorAdaptionSpeed = 0.1f;
+	// Percent per second
+	public const float colorAdaptionSpeed = 1f;
 	public const float capacitySizeFactor = 50;
 
 	private Renderer rend;
@@ -81,12 +81,12 @@ public class AmoebaManager : MonoBehaviour
 	{
 		float redDelta = (stressLevel / maxStressLevel) - inverseColor.r;
 		if (redDelta != 0) {
-			float newRed = inverseColor.r + Mathf.Min (redDelta * Time.deltaTime, maxColorAdaptionSpeed);
+			float newRed = inverseColor.r + Mathf.Min (colorAdaptionSpeed * Time.deltaTime, redDelta);
 			inverseColor = new Color (newRed, inverseColor.g, inverseColor.b);
 		}
 
 		Color currentColor = new Color (1 - inverseColor.b - inverseColor.g,
-			1 - inverseColor.b - inverseColor.r, 1 - inverseColor.r - inverseColor.g);
+			                     1 - inverseColor.b - inverseColor.r, 1 - inverseColor.r - inverseColor.g);
 
 		rend.material.color = currentColor;
 	}
@@ -107,7 +107,7 @@ public class AmoebaManager : MonoBehaviour
 		}
 
 		if (stressLevel < maxStressLevel && stressLevel > 0) {
-			stressLevel -= maxStressLevel * redStressDecayRatio * Time.deltaTime;
+			stressLevel -= maxStressLevel * stressDecayRatio * Time.deltaTime;
 		}
 
 		if (stressLevel <= 0 && maxStressSinceGrowth > 0) {
