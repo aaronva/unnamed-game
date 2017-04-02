@@ -20,8 +20,8 @@ public class StressorController : MonoBehaviour
 	}
 
 	private void updateSize ()
-	{
-		// TODO complete this
+	{	
+		this.transform.localScale = Vector3.one * (Mathf.Log (1 + stressLevel / 50) + 0.5f);
 	}
 
 	public void applyForce (Vector3 force)

@@ -9,18 +9,16 @@ public class AmoebaManager : MonoBehaviour
 
 	public float stressLevel { get; private set; }
 
-	public float redStressCapacity = 50f;
-	//	public float redDecayUnitsPerSecond = 2f;
+	public float maxStressLevel = 50f;
+	// TODO remove this
 	public const float redStressDecayRatio = 0.05f;
 
 	// units per second
-	public float maxColorAdaptionSpeed = 0.1f;
-
+	public const float maxColorAdaptionSpeed = 0.1f;
 	public const float capacitySizeFactor = 50;
 
 	private Renderer rend;
 
-	private Color currentColor = Color.white;
 	private Color inverseColor = Color.black;
 
 	public BreathingController breathingController;
@@ -41,12 +39,12 @@ public class AmoebaManager : MonoBehaviour
 	private bool isLashingOut = false;
 	private float lastOutburst = 0;
 	public const float baseOutburstFrequency = 3;
-	public const int numberStressorsProducedDuringOutburst = 5;
+	public const int numberStressorsProducedDuringOutburst = 6;
 
 	void Start ()
 	{
 		rend = GetComponent<Renderer> ();
-		rend.material.color = currentColor;
+		rend.material.color = Color.white;
 		stressLevel = 0;
 	}
 
@@ -81,13 +79,13 @@ public class AmoebaManager : MonoBehaviour
 
 	void UpdateColors ()
 	{
-		float redDelta = (stressLevel / redStressCapacity) - inverseColor.r;
+		float redDelta = (stressLevel / maxStressLevel) - inverseColor.r;
 		if (redDelta != 0) {
 			float newRed = inverseColor.r + Mathf.Min (redDelta * Time.deltaTime, maxColorAdaptionSpeed);
 			inverseColor = new Color (newRed, inverseColor.g, inverseColor.b);
 		}
 
-		currentColor = new Color (1 - inverseColor.b - inverseColor.g,
+		Color currentColor = new Color (1 - inverseColor.b - inverseColor.g,
 			1 - inverseColor.b - inverseColor.r, 1 - inverseColor.r - inverseColor.g);
 
 		rend.material.color = currentColor;
@@ -95,7 +93,7 @@ public class AmoebaManager : MonoBehaviour
 
 	void UpdateStress ()
 	{
-		if (stressLevel >= redStressCapacity) {
+		if (stressLevel >= maxStressLevel) {
 			maxCapacityReached ();
 		}
 
@@ -108,8 +106,8 @@ public class AmoebaManager : MonoBehaviour
 			maxStressSinceGrowth = stressLevel;
 		}
 
-		if (stressLevel < redStressCapacity && stressLevel > 0) {
-			stressLevel -= redStressCapacity * redStressDecayRatio * Time.deltaTime;
+		if (stressLevel < maxStressLevel && stressLevel > 0) {
+			stressLevel -= maxStressLevel * redStressDecayRatio * Time.deltaTime;
 		}
 
 		if (stressLevel <= 0 && maxStressSinceGrowth > 0) {
@@ -121,12 +119,12 @@ public class AmoebaManager : MonoBehaviour
 
 	void UpdateBreathingSpeed ()
 	{
-		breathingController.setSpeedFactor (stressLevel / redStressCapacity);
+		breathingController.setSpeedFactor (stressLevel / maxStressLevel);
 	}
 
 	void UpdateSize ()
 	{
-		float sizeRatio = redStressCapacity / capacitySizeFactor;
+		float sizeRatio = maxStressLevel / capacitySizeFactor;
 		sizeRatio = Mathf.Log (sizeRatio + 1) + 0.5f;
 		breathingController.setBaseFactor (sizeRatio);
 	}
@@ -165,8 +163,8 @@ public class AmoebaManager : MonoBehaviour
 
 	void triggerGrowth ()
 	{
-		triggerIntensityIncrease (maxStressSinceGrowth / redStressCapacity);
-		redStressCapacity += maxStressSinceGrowth * growthFactor;
+		triggerIntensityIncrease (maxStressSinceGrowth / maxStressLevel);
+		maxStressLevel += maxStressSinceGrowth * growthFactor;
 	}
 
 	void triggerIntensityIncrease (float percentage)
@@ -181,7 +179,7 @@ public class AmoebaManager : MonoBehaviour
 		if (!isLashingOut) {
 			notifyListeners ();
 		}
-		stressLevel = redStressCapacity;
+		stressLevel = maxStressLevel;
 		beginLashout ();
 	}
 
@@ -199,11 +197,12 @@ public class AmoebaManager : MonoBehaviour
 
 	private void triggerOutburst ()
 	{
-		float increament = 360f / numberStressorsProducedDuringOutburst;
-		float outburstStressLevel = (float)redStressCapacity / 8;
+		const float increament = 360f / numberStressorsProducedDuringOutburst;
+		float initialAngle = 2 * stressLevel / maxStressLevel * increament;
+		float outburstStressLevel = (float)maxStressLevel / 8;
 
 		for (int i = 0; i < numberStressorsProducedDuringOutburst; i++) {
-			float angle = increament * i;
+			float angle = initialAngle + increament * i;
 			Quaternion quaternion = Quaternion.AngleAxis (angle, Vector3.up);
 
 			Vector3 forceUnitVector = quaternion * new Vector3 (1, 0, 1);
@@ -212,17 +211,17 @@ public class AmoebaManager : MonoBehaviour
 				Instantiate (stressorTemplate, this.transform.position, Quaternion.identity);
 			stressor.applyForce (forceUnitVector * 220); // TODO replace hard coded force scalor
 			stressor.creator = this.gameObject;
-			stressor.setStressLevel (outburstStressLevel);
+			stressor.setStressLevel (2 * outburstStressLevel);
 
-			// Kill in 5 seconds
+			// TODO have an out-of-bounds area to cleanup stressors instead
 			Destroy (stressor.gameObject, 1);
 		}
 
-		// TODO this should probably just be part of the breathingController
+		// this should probably just be part of the breathingController
 		this.transform.localScale = Vector3.one * breathingController.baseFactor * (1 + breathingController.fluctuation);
 		stressLevel -= outburstStressLevel;
 
-		if (stressLevel < redStressCapacity / 2) {
+		if (stressLevel < maxStressLevel / 2) {
 			endLashout ();
 		}
 	}
