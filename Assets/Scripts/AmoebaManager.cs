@@ -29,6 +29,7 @@ public class AmoebaManager : MonoBehaviour
 
 	private bool lightIntensityIsIncreasing = false;
 	private float lightIntensityTarget;
+	private bool hasOutburstSinceLastGrowth = false;
 
 	public const float growthFactor = 0.2f;
 
@@ -37,7 +38,7 @@ public class AmoebaManager : MonoBehaviour
 	private List<GameObject> listeners = new List<GameObject> ();
 
 	private bool isLashingOut = false;
-	private float lastOutburst = 0;
+	private float lastOutburstTime = 0;
 	public const float baseOutburstFrequency = 3;
 	public const int numberStressorsProducedDuringOutburst = 6;
 
@@ -51,18 +52,17 @@ public class AmoebaManager : MonoBehaviour
 	void OnTriggerEnter (Collider other)
 	{
 		if (other.gameObject.CompareTag ("Stressor")) {
-			absorbStress (other.gameObject);
+			AbsorbStress (other.gameObject);
 		}
 	}
 
-	void absorbStress (GameObject gameObject)
+	void AbsorbStress (GameObject gameObject)
 	{
 		StressorController stressor = (StressorController)gameObject.GetComponent<StressorController> ();
 		if (stressor.creator == this.gameObject) {
 			return;
 		}
-
-		gameObject.SetActive (false);
+			
 		stressLevel += stressor.stressLevel;
 		Destroy (gameObject);
 	}
@@ -94,7 +94,7 @@ public class AmoebaManager : MonoBehaviour
 	void UpdateStress ()
 	{
 		if (stressLevel >= maxStressLevel) {
-			maxCapacityReached ();
+			MaxCapacityReached ();
 		}
 
 		if (isLashingOut) {
@@ -111,9 +111,10 @@ public class AmoebaManager : MonoBehaviour
 		}
 
 		if (stressLevel <= 0 && maxStressSinceGrowth > 0) {
-			triggerGrowth ();
+			TriggerGrowth ();
 			stressLevel = 0;
 			maxStressSinceGrowth = 0;
+			hasOutburstSinceLastGrowth = false;
 		}
 	}
 
@@ -149,53 +150,54 @@ public class AmoebaManager : MonoBehaviour
 			return;
 		}
 
-		float timeSinceLastOutburst = Time.time - lastOutburst;
+		float timeSinceLastOutburst = Time.time - lastOutburstTime;
 		float timeBetweenOutbursts = 1 / baseOutburstFrequency;
 
 		if (timeSinceLastOutburst > timeBetweenOutbursts) {
-			triggerOutburst ();
-			lastOutburst = Time.time;
+			TriggerOutburst ();
+			lastOutburstTime = Time.time;
 		}
 
 		float fluctuationScale = timeSinceLastOutburst / timeBetweenOutbursts * -2 * breathingController.fluctuation + 1;
 		this.transform.localScale = Vector3.one * breathingController.baseFactor * fluctuationScale;
 	}
 
-	void triggerGrowth ()
+	void TriggerGrowth ()
 	{
-		triggerIntensityIncrease (maxStressSinceGrowth / maxStressLevel);
+		float outburstPenalty = hasOutburstSinceLastGrowth ? 0.5f : 1f;
+		TriggerIntensityIncrease (maxStressSinceGrowth / maxStressLevel * outburstPenalty);
 		maxStressLevel += maxStressSinceGrowth * growthFactor;
 	}
 
-	void triggerIntensityIncrease (float percentage)
+	void TriggerIntensityIncrease (float percentage)
 	{
 		lightIntensityIsIncreasing = true;
 		// TODO possible log here?
 		lightIntensityTarget = percentage * lightPeakIntensity;
 	}
 
-	private void maxCapacityReached ()
+	private void MaxCapacityReached ()
 	{
 		if (!isLashingOut) {
-			notifyListeners ();
+			NotifyListeners ();
 		}
 		stressLevel = maxStressLevel;
-		beginLashout ();
+		BeginLashout ();
 	}
 
-	private void beginLashout ()
+	private void BeginLashout ()
 	{
 		isLashingOut = true;
 		breathingController.pauseBreathing ();
 	}
 
-	private void endLashout ()
+	private void EndLashout ()
 	{
 		isLashingOut = false;
 		breathingController.resumeBreathing ();
 	}
 
-	private void triggerOutburst ()
+	private void TriggerOutburst ()
 	{
 		const float increament = 360f / numberStressorsProducedDuringOutburst;
 		float initialAngle = 2 * stressLevel / maxStressLevel * increament;
@@ -222,18 +224,18 @@ public class AmoebaManager : MonoBehaviour
 		stressLevel -= outburstStressLevel;
 
 		if (stressLevel < maxStressLevel / 2) {
-			endLashout ();
+			EndLashout ();
 		}
 	}
 
-	private void notifyListeners ()
+	private void NotifyListeners ()
 	{
 		foreach (GameObject target in listeners) {
 			ExecuteEvents.Execute<IMaxStressTarget> (target, null, (x, y) => x.MaxStressReached (this));
 		}
 	}
 
-	public void registerListener (GameObject target)
+	public void RegisterListener (GameObject target)
 	{
 		listeners.Add (target);
 	}

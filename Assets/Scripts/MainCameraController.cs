@@ -5,29 +5,40 @@ using UnityEngine;
 public class MainCameraController : MonoBehaviour
 {
 
-	public float displacementRatio = 0.02f;
-	public float minDistance = 0.2f;
-	public float maxDistance = 20f;
+	public float DisplacementRatio = 0.02f;
+	public float MinDistance = 0.2f;
+	public float MaxDistance = 20f;
 
 	private Vector3 defaultPosition;
+//	private Quaternion defaultRotation;
 
-	// Use this for initialization
 	void Start ()
 	{
 		defaultPosition = this.transform.position;
+//		defaultRotation = this.transform.rotation;
 	}
 	
-	// Update is called once per frame
 	void Update ()
 	{
 		Vector3 mousePosition = GetInworldMousePosition ();
-		Vector3 targetDisplacement = ComputeTransformation (mousePosition);
+		Vector3 targetDisplacement = ComputeNewPosition (mousePosition);
 		this.transform.position = defaultPosition + targetDisplacement;
+//		this.transform.ro
+//		Quaternion angularDelta = ComputeNewRotation(mousePosition);
+//		this.transform.rotation = angularDelta;
 	}
 
-	private Vector3 ComputeTransformation (Vector3 position)
+	private Vector3 ComputeNewPosition (Vector3 mousePosition)
 	{
-		return position *= displacementRatio;
+		return mousePosition * DisplacementRatio;
+	}
+
+	// TODO research and better understand Quaternion (and/or angles)
+	private Quaternion ComputeNewRotation (Vector3 mousePosition)
+	{
+//		Vector3 delta = this.transform.position - mousePosition;
+		return Quaternion.LookRotation (new Vector3(0,0,5) - this.transform.position, Vector3.forward);
+//		return Quaternion.FromToRotation (this.transform.position, delta);
 	}
 
 	private Vector3 GetInworldMousePosition ()
