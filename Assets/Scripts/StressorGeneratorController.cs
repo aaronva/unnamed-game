@@ -69,8 +69,23 @@ public class StressorGeneratorController : MonoBehaviour
 
 	private float ComputeStressLevel ()
 	{
-//		return Random.Range (5, 30);
-		return 5;
+		float smallStressorWeight = 40;
+		float mediumStressorWeight = currentDifficulty > 40 ? (currentDifficulty - 40) : 0;
+		float largeStressorWeight = currentDifficulty > 80 ? (currentDifficulty - 80) : 0;
+
+		float totalStressorWeight = smallStressorWeight + mediumStressorWeight + largeStressorWeight;
+
+		int difficultySizeBoost = (int)currentDifficulty / 40;
+
+		float randomGen = Random.Range (0, totalStressorWeight);
+
+		if (randomGen < smallStressorWeight) {
+			return 5 + difficultySizeBoost;
+		} else if (randomGen < mediumStressorWeight) {
+			return 10 + difficultySizeBoost;
+		} else {
+			return 15 + difficultySizeBoost;
+		}
 	}
 
 	private float ComputeDifficulty ()
@@ -87,13 +102,14 @@ public class StressorGeneratorController : MonoBehaviour
 
 	private float ComputeNextGenerationTime ()
 	{
-		const float randomBar = 0.2f;
+		const float varianceFactor = 0.2f;
 		const float maxBaseline = 2.5f;
 
-		float baselineTime = Mathf.Min(50 / currentDifficulty, maxBaseline);
+		float baselineTimeDelay = Mathf.Min(50 / currentDifficulty, maxBaseline);
+//		float baselineFrequency = currentDifficulty / 50;
 
-		float minTime = baselineTime * (1 - randomBar);
-		float maxTime = baselineTime * (1 + randomBar);
+		float minTime = baselineTimeDelay * (1 - varianceFactor);
+		float maxTime = baselineTimeDelay * (1 + varianceFactor);
 
 		float timeUntilNext = Random.Range (minTime, maxTime);
 

@@ -37,7 +37,7 @@ public class AmoebaManager : MonoBehaviour
 
 	private List<GameObject> listeners = new List<GameObject> ();
 
-	private bool isLashingOut = false;
+	public bool isLashingOut { get; private set; }
 	private float lastOutburstTime = 0;
 	public const float baseOutburstFrequency = 3;
 	public const int numberStressorsProducedDuringOutburst = 6;
@@ -47,6 +47,7 @@ public class AmoebaManager : MonoBehaviour
 		rend = GetComponent<Renderer> ();
 		rend.material.color = Color.white;
 		stressLevel = 0;
+		isLashingOut = false;
 	}
 
 	void OnTriggerEnter (Collider other)
