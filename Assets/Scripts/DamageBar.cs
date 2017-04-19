@@ -17,8 +17,9 @@ public class DamageBar : MonoBehaviour
 
 	void Start ()
 	{
+//		RectTransform transform = GetComponent<RectTransform> ();
+
 		percent = 1f;
-		startingPosition = this.transform.localPosition;
 		startingXScale = this.transform.localScale.x;
 	}
 
@@ -26,25 +27,28 @@ public class DamageBar : MonoBehaviour
 	{
 		float newXScale = startingXScale * percent;
 		this.transform.localScale = new Vector3 (newXScale, this.transform.localScale.y, this.transform.localScale.z);
-
-		UpdatePosition ();
+//
+//		UpdatePosition ();
 	}
 
-	void UpdatePosition ()
-	{
-		SpriteRenderer spriteRenderer = GetComponent<SpriteRenderer> ();
-
-		float newXPosition = startingPosition.x;
-
-		if (dockedPosition == RelativePosition.Left) {
-			// Don't need to do anything
-			return; 
-		} else if (dockedPosition == RelativePosition.Center) {
-			newXPosition += (startingXScale - this.transform.localScale.x) * spriteRenderer.sprite.bounds.size.x / 2;
-		} else if (dockedPosition == RelativePosition.Right) {
-			newXPosition += (startingXScale - this.transform.localScale.x) * spriteRenderer.sprite.bounds.size.x;
-		}
-
-		this.transform.localPosition = new Vector3 (newXPosition, this.transform.localPosition.y, this.transform.localPosition.z);
-	}
+//	void UpdatePosition ()
+//	{
+//		RectTransform transform = GetComponent<RectTransform> ();
+//
+//		SpriteRenderer spriteRenderer = GetComponent<SpriteRenderer> ();
+//
+//		float newXPosition = startingPosition.x;
+//
+//		if (dockedPosition == RelativePosition.Left) {
+//			// Don't need to do anything
+//			return; 
+//		} else if (dockedPosition == RelativePosition.Center) {
+//			newXPosition += (startingXScale - transform.localScale.x) * spriteRenderer.sprite.bounds.size.x / 2;
+//		} else if (dockedPosition == RelativePosition.Right) {
+//			newXPosition += (startingXScale - transform.localScale.x) * spriteRenderer.sprite.bounds.size.x;
+//		}
+//
+//
+//		transform.position = new Vector3 (newXPosition, transform.position.y, transform.position.z);
+//	}
 }

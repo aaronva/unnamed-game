@@ -18,7 +18,6 @@ public class StressorGeneratorController : MonoBehaviour
 	void Update ()
 	{
 		currentDifficulty = ComputeDifficulty ();
-		Debug.logger.Log (currentDifficulty);
 
 		if (ShouldGenerate ()) {
 			float angle = ComputeAngle ();
@@ -92,7 +91,7 @@ public class StressorGeneratorController : MonoBehaviour
 	{
 //		Rough formula based off of ideal difficulty curves. Percise numbers should likely be tweaked.
 
-		// Period between difficulty spikes (first spike is at period / 2)
+		// Period (in sec) between difficulty spikes (first spike is at period / 2)
 		const float period = 10f;
 
 		float modifiedTime = Time.time * period / (2 * Mathf.PI);
