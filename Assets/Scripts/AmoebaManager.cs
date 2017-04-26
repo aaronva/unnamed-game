@@ -31,13 +31,14 @@ public class AmoebaManager : MonoBehaviour
 	private float lightIntensityTarget;
 	private bool hasOutburstSinceLastGrowth = false;
 
-	public const float growthFactor = 0.2f;
+	public const float GrowthFactor = 0.2f;
 
 	private float maxStressSinceGrowth = 0;
 
 	private List<GameObject> listeners = new List<GameObject> ();
 
 	public bool isLashingOut { get; private set; }
+
 	private float lastOutburstTime = 0;
 	public const float baseOutburstFrequency = 3;
 	public const int numberStressorsProducedDuringOutburst = 6;
@@ -166,8 +167,9 @@ public class AmoebaManager : MonoBehaviour
 	void TriggerGrowth ()
 	{
 		float outburstPenalty = hasOutburstSinceLastGrowth ? 0.5f : 1f;
-		TriggerIntensityIncrease (maxStressSinceGrowth / maxStressLevel * outburstPenalty);
-		maxStressLevel += maxStressSinceGrowth * growthFactor;
+		float oldMaxStress = maxStressLevel;
+		maxStressLevel += Mathf.Pow (maxStressSinceGrowth * outburstPenalty * GrowthFactor, 2);
+		TriggerIntensityIncrease (1f - oldMaxStress / maxStressLevel);
 	}
 
 	void TriggerIntensityIncrease (float percentage)
