@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class StressorGeneratorController : MonoBehaviour
 {
+	public GameManager GameManager;
 	public StressorController stressorTemplate;
 	public float generatedRadius = 20f;
 
@@ -16,12 +17,10 @@ public class StressorGeneratorController : MonoBehaviour
 
 //	public enum DifficultyLevel {Easy = 0, Normal = 1, Hard = 2}
 
-	public float OverallDifficultyLevel = 0.5f;
-
 	// Update is called once per frame
 	void Update ()
 	{
-		currentTimeBasedDifficulty = ComputeTimeBasedDifficulty ();
+		currentTimeBasedDifficulty = GameManager.ComputeTimeBasedDifficulty ();
 
 		if (ShouldGenerate ()) {
 			float angle = ComputeAngle ();
@@ -89,19 +88,6 @@ public class StressorGeneratorController : MonoBehaviour
 		} else {
 			return 10 + difficultySizeBoost;
 		}
-	}
-
-	private float ComputeTimeBasedDifficulty ()
-	{
-//		Rough formula based off of ideal difficulty curves. Percise numbers should likely be tweaked.
-
-		// Period (in sec) between difficulty spikes (first spike is at period / 2)
-		const float period = 10f;
-
-		float modifiedTime = Time.time * period / (2 * Mathf.PI);
-
-		return modifiedTime / (2 - OverallDifficultyLevel) +
-			-3 * Mathf.Cos (modifiedTime) + 3 + 4 * OverallDifficultyLevel;
 	}
 
 	private float ComputeNextGenerationTime ()

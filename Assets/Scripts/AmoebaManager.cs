@@ -7,21 +7,21 @@ public class AmoebaManager : MonoBehaviour
 {
 	public StressorController stressorTemplate;
 
-	public float stressLevel { get; private set; }
+	public float StressLevel { get; private set; }
 
-	public float maxStressLevel = 50f;
+	public float MaxStressLevel = 50f;
 	// TODO remove this
-	public const float stressDecayRatio = 0.1f;
+	public const float StressDecayRatio = 0.1f;
 
 	// Percent per second
-	public const float colorAdaptionSpeed = 1f;
-	public const float capacitySizeFactor = 50;
+	public const float ColorAdaptionSpeed = 1f;
+	public const float CapacitySizeFactor = 50;
 
 	private Renderer rend;
 
 	private Color inverseColor = Color.black;
 
-	public BreathingController breathingController;
+	public BreathingController BreathingController;
 
 	private const float lightPeakIntensity = 3;
 	private const float lightIntensityIncreaseDuration = 0.2f;
@@ -31,24 +31,26 @@ public class AmoebaManager : MonoBehaviour
 	private float lightIntensityTarget;
 	private bool hasOutburstSinceLastGrowth = false;
 
-	public const float GrowthFactor = 0.2f;
+	public const float GrowthFactor = 0.1f;
 
 	private float maxStressSinceGrowth = 0;
 
 	private List<GameObject> listeners = new List<GameObject> ();
 
-	public bool isLashingOut { get; private set; }
+	public bool IsLashingOut { get; private set; }
 
 	private float lastOutburstTime = 0;
-	public const float baseOutburstFrequency = 3;
-	public const int numberStressorsProducedDuringOutburst = 6;
+	public const float BaseOutburstFrequency = 3;
+	public const int NumberStressorsProducedDuringOutburst = 6;
+
+	private float initialAngle = 0f;
 
 	void Start ()
 	{
 		rend = GetComponent<Renderer> ();
 		rend.material.color = Color.white;
-		stressLevel = 0;
-		isLashingOut = false;
+		StressLevel = 0;
+		IsLashingOut = false;
 	}
 
 	void OnTriggerEnter (Collider other)
@@ -65,7 +67,7 @@ public class AmoebaManager : MonoBehaviour
 			return;
 		}
 			
-		stressLevel += stressor.stressLevel;
+		StressLevel += stressor.stressLevel;
 		Destroy (gameObject);
 	}
 
@@ -81,9 +83,9 @@ public class AmoebaManager : MonoBehaviour
 
 	void UpdateColors ()
 	{
-		float redDelta = (stressLevel / maxStressLevel) - inverseColor.r;
+		float redDelta = (StressLevel / MaxStressLevel) - inverseColor.r;
 		if (redDelta != 0) {
-			float newRed = inverseColor.r + Mathf.Min (colorAdaptionSpeed * Time.deltaTime, redDelta);
+			float newRed = inverseColor.r + Mathf.Min (ColorAdaptionSpeed * Time.deltaTime, redDelta);
 			inverseColor = new Color (newRed, inverseColor.g, inverseColor.b);
 		}
 
@@ -95,26 +97,26 @@ public class AmoebaManager : MonoBehaviour
 
 	void UpdateStress ()
 	{
-		if (stressLevel >= maxStressLevel) {
+		if (StressLevel >= MaxStressLevel) {
 			MaxCapacityReached ();
 		}
 
-		if (isLashingOut) {
+		if (IsLashingOut) {
 			// special logic will be done when lashing out
 			return;
 		}
 
-		if (stressLevel > maxStressSinceGrowth) {
-			maxStressSinceGrowth = stressLevel;
+		if (StressLevel > maxStressSinceGrowth) {
+			maxStressSinceGrowth = StressLevel;
 		}
 
-		if (stressLevel < maxStressLevel && stressLevel > 0) {
-			stressLevel -= maxStressLevel * stressDecayRatio * Time.deltaTime;
+		if (StressLevel < MaxStressLevel && StressLevel > 0) {
+			StressLevel -= MaxStressLevel * StressDecayRatio * Time.deltaTime;
 		}
 
-		if (stressLevel <= 0 && maxStressSinceGrowth > 0) {
+		if (StressLevel <= 0 && maxStressSinceGrowth > 0) {
 			TriggerGrowth ();
-			stressLevel = 0;
+			StressLevel = 0;
 			maxStressSinceGrowth = 0;
 			hasOutburstSinceLastGrowth = false;
 		}
@@ -122,14 +124,14 @@ public class AmoebaManager : MonoBehaviour
 
 	void UpdateBreathingSpeed ()
 	{
-		breathingController.setSpeedFactor (stressLevel / maxStressLevel);
+		BreathingController.setSpeedFactor (StressLevel / MaxStressLevel);
 	}
 
 	void UpdateSize ()
 	{
-		float sizeRatio = maxStressLevel / capacitySizeFactor;
+		float sizeRatio = MaxStressLevel / CapacitySizeFactor;
 		sizeRatio = Mathf.Log (sizeRatio + 1) + 0.5f;
-		breathingController.setBaseFactor (sizeRatio);
+		BreathingController.setBaseFactor (sizeRatio);
 	}
 
 	void UpdateLight ()
@@ -147,29 +149,29 @@ public class AmoebaManager : MonoBehaviour
 
 	void UpdateLashout ()
 	{
-		if (!isLashingOut) {
+		if (!IsLashingOut) {
 			// Don't need to do work if we aren't lashing out.
 			return;
 		}
 
 		float timeSinceLastOutburst = Time.time - lastOutburstTime;
-		float timeBetweenOutbursts = 1 / baseOutburstFrequency;
+		float timeBetweenOutbursts = 1 / BaseOutburstFrequency;
 
 		if (timeSinceLastOutburst > timeBetweenOutbursts) {
 			TriggerOutburst ();
 			lastOutburstTime = Time.time;
 		}
 
-		float fluctuationScale = timeSinceLastOutburst / timeBetweenOutbursts * -2 * breathingController.fluctuation + 1;
-		this.transform.localScale = Vector3.one * breathingController.baseFactor * fluctuationScale;
+		float fluctuationScale = timeSinceLastOutburst / timeBetweenOutbursts * -2 * BreathingController.fluctuation + 1;
+		this.transform.localScale = Vector3.one * BreathingController.baseFactor * fluctuationScale;
 	}
 
 	void TriggerGrowth ()
 	{
 		float outburstPenalty = hasOutburstSinceLastGrowth ? 0.5f : 1f;
-		float oldMaxStress = maxStressLevel;
-		maxStressLevel += Mathf.Pow (maxStressSinceGrowth * outburstPenalty * GrowthFactor, 2);
-		TriggerIntensityIncrease (1f - oldMaxStress / maxStressLevel);
+		float oldMaxStress = MaxStressLevel;
+		MaxStressLevel += Mathf.Pow (maxStressSinceGrowth * outburstPenalty * GrowthFactor, 2);
+		TriggerIntensityIncrease (1f - oldMaxStress / MaxStressLevel);
 	}
 
 	void TriggerIntensityIncrease (float percentage)
@@ -181,32 +183,36 @@ public class AmoebaManager : MonoBehaviour
 
 	private void MaxCapacityReached ()
 	{
-		if (!isLashingOut) {
+		if (!IsLashingOut) {
 			NotifyListeners ();
 		}
-		stressLevel = maxStressLevel;
+		StressLevel = MaxStressLevel;
 		BeginLashout ();
 	}
 
 	private void BeginLashout ()
 	{
-		isLashingOut = true;
-		breathingController.pauseBreathing ();
+		IsLashingOut = true;
+		BreathingController.pauseBreathing ();
+		initialAngle = -1f;
 	}
 
 	private void EndLashout ()
 	{
-		isLashingOut = false;
-		breathingController.resumeBreathing ();
+		IsLashingOut = false;
+		BreathingController.resumeBreathing ();
 	}
 
 	private void TriggerOutburst ()
 	{
-		const float increament = 360f / numberStressorsProducedDuringOutburst;
-		float initialAngle = 2 * stressLevel / maxStressLevel * increament;
-		float outburstStressLevel = (float)maxStressLevel / 8;
+		const float increament = 360f / NumberStressorsProducedDuringOutburst;
+		float outburstStressLevel = (float)MaxStressLevel / 8;
 
-		for (int i = 0; i < numberStressorsProducedDuringOutburst; i++) {
+		if (initialAngle < 0) {
+			initialAngle = Random.Range (0f, increament);
+		}
+
+		for (int i = 0; i < NumberStressorsProducedDuringOutburst; i++) {
 			float angle = initialAngle + increament * i;
 			Quaternion quaternion = Quaternion.AngleAxis (angle, Vector3.up);
 
@@ -223,10 +229,10 @@ public class AmoebaManager : MonoBehaviour
 		}
 
 		// this should probably just be part of the breathingController
-		this.transform.localScale = Vector3.one * breathingController.baseFactor * (1 + breathingController.fluctuation);
-		stressLevel -= outburstStressLevel;
+		this.transform.localScale = Vector3.one * BreathingController.baseFactor * (1 + BreathingController.fluctuation);
+		StressLevel -= outburstStressLevel;
 
-		if (stressLevel < maxStressLevel / 2) {
+		if (StressLevel < MaxStressLevel / 2) {
 			EndLashout ();
 		}
 	}

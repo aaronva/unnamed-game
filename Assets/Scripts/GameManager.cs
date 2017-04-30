@@ -4,27 +4,38 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
+	public enum GameMode
+	{
+		Growth,
+		Survival
+	}
 
 	public AmoebaManager ProtectedAmoeba;
 	public DamageBar DamageBar;
+	public UnityEngine.UI.Text GrowthLevelText;
 	public CanvasGroup[] GameOverGroup;
 
-	public float maxLashoutLength = 5f;
+	public static float MaxLashoutLength = 5f;
 
-	public float lashoutDuration { get; private set; }
+	public static float LashoutDuration { get; private set; }
+
+	public static float GrowthLevelIncrement = 10f;
+	public static float OverallDifficultyLevel = 0.5f;
+	public static GameMode CurrentGameMode;
 
 	private float gameOverTime = -1f;
 
-	// Update is called once per frame
 	void Update ()
 	{
-		if (ProtectedAmoeba.isLashingOut && gameOverTime < 0) {
-			lashoutDuration += Time.deltaTime;
+		GrowthLevelText.text = (Mathf.Floor(ProtectedAmoeba.MaxStressLevel / GrowthLevelIncrement)).ToString();
 
-			if (lashoutDuration > maxLashoutLength) {
-				TriggerGameOut ();
+		if (ProtectedAmoeba.IsLashingOut && gameOverTime < 0) {
+			LashoutDuration += Time.deltaTime;
+
+			if (LashoutDuration > MaxLashoutLength) {
+				TriggerGameOver ();
 			} else {
-				DamageBar.percent = 1f - lashoutDuration / maxLashoutLength;
+				DamageBar.percent = 1f - LashoutDuration / MaxLashoutLength;
 			}
 		} else if (gameOverTime > 0 && Time.timeScale > 0) {
 			float newScale = 1f - Mathf.Sqrt (Time.realtimeSinceStartup - gameOverTime);
@@ -38,10 +49,21 @@ public class GameManager : MonoBehaviour
 		}
 	}
 
-	void TriggerGameOut ()
+	void TriggerGameOver ()
 	{
 		// TODO implement effects outside of this class
 		DamageBar.percent = 0;
 		gameOverTime = Time.realtimeSinceStartup;
+	}
+
+	public static float ComputeTimeBasedDifficulty ()
+	{
+		// Period (in sec) between difficulty spikes (first spike is at period / 2)
+		const float period = 10f;
+
+		float modifiedTime = Time.time * period / (2 * Mathf.PI);
+
+		return modifiedTime / (2 - OverallDifficultyLevel) +
+		-3 * Mathf.Cos (modifiedTime) + 3 + 4 * OverallDifficultyLevel;
 	}
 }
