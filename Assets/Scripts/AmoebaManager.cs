@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
+// This should technically be named controller in hindsight
 public class AmoebaManager : MonoBehaviour
 {
 	public StressorController stressorTemplate;
@@ -11,7 +12,7 @@ public class AmoebaManager : MonoBehaviour
 
 	public float MaxStressLevel = 50f;
 	// TODO remove this
-	public const float StressDecayRatio = 0.1f;
+	public const float StressDecayRatio = 0.05f;
 
 	// Percent per second
 	public const float ColorAdaptionSpeed = 1f;

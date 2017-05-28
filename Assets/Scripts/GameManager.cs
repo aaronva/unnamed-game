@@ -23,11 +23,18 @@ public class GameManager : MonoBehaviour
 	public static float OverallDifficultyFactor = 0.5f;
 	public static GameMode CurrentGameMode;
 
+	public static int GrowthLevel { get; private set; }
+
+	public static float CurrentDifficulty { get; private set; }
+
 	private float gameOverTime = -1f;
 
 	void Update ()
 	{
-		GrowthLevelText.text = (Mathf.Floor(ProtectedAmoeba.MaxStressLevel / GrowthLevelIncrement)).ToString();
+		CurrentDifficulty = ComputeTimeBasedDifficulty();
+
+		GrowthLevel = (int) Mathf.Floor (ProtectedAmoeba.MaxStressLevel / GrowthLevelIncrement);
+		GrowthLevelText.text = GrowthLevel.ToString ();
 
 		if (ProtectedAmoeba.IsLashingOut && gameOverTime < 0) {
 			LashoutDuration += Time.deltaTime;
@@ -38,8 +45,10 @@ public class GameManager : MonoBehaviour
 				DamageBar.percent = 1f - LashoutDuration / MaxLashoutLength;
 			}
 		} else if (gameOverTime > 0 && Time.timeScale > 0) {
-			float newScale = 1f - Mathf.Sqrt (Time.realtimeSinceStartup - gameOverTime);
-			Time.timeScale = Mathf.Max (newScale, 0f);
+			if (Time.timeScale > 0) {
+				float newScale = 1f - Mathf.Sqrt (Time.realtimeSinceStartup - gameOverTime);
+				Time.timeScale = Mathf.Max (newScale, 0f);
+			}
 
 			// TODO fix problem where alpha doesn't technically reach 1.0 before we stop entering this branch
 			float newAlpha = (Time.realtimeSinceStartup - gameOverTime);
@@ -56,16 +65,24 @@ public class GameManager : MonoBehaviour
 		gameOverTime = Time.realtimeSinceStartup;
 	}
 
-	public static float ComputeTimeBasedDifficulty ()
+	private static float ComputeTimeBasedDifficulty ()
 	{
 		// Period (in sec) between difficulty spikes (first spike is at period / 2)
 		const float period = 25f;
-		const float difficultyIncreasePerPeriod = 4f;
-		const float periodAmplitude = 5f;
+		const float periodAmplitude = 8f;
 		const float startingDifficulty = 10f;
 
-		return OverallDifficultyFactor *
-		(startingDifficulty + Time.time * difficultyIncreasePerPeriod / period
-		- periodAmplitude * Mathf.Cos (Time.time * 2 * Mathf.PI / period));
+		const float difficultyIncreasePerPeriod = 4f;
+		const float difficultyIncreasePerGrowthLevel = 10f;
+
+		if (CurrentGameMode == GameMode.Growth) {
+			return OverallDifficultyFactor *
+			(startingDifficulty + difficultyIncreasePerGrowthLevel * GrowthLevel
+			- periodAmplitude * Mathf.Cos (Time.time * 2 * Mathf.PI / period));
+		} else {
+			return OverallDifficultyFactor *
+			(startingDifficulty + Time.time * difficultyIncreasePerPeriod / period
+			- periodAmplitude * Mathf.Cos (Time.time * 2 * Mathf.PI / period));
+		}
 	}
 }
