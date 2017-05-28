@@ -20,7 +20,7 @@ public class GameManager : MonoBehaviour
 	public static float LashoutDuration { get; private set; }
 
 	public static float GrowthLevelIncrement = 10f;
-	public static float OverallDifficultyLevel = 0.5f;
+	public static float OverallDifficultyFactor = 0.5f;
 	public static GameMode CurrentGameMode;
 
 	private float gameOverTime = -1f;
@@ -59,11 +59,13 @@ public class GameManager : MonoBehaviour
 	public static float ComputeTimeBasedDifficulty ()
 	{
 		// Period (in sec) between difficulty spikes (first spike is at period / 2)
-		const float period = 10f;
+		const float period = 25f;
+		const float difficultyIncreasePerPeriod = 4f;
+		const float periodAmplitude = 5f;
+		const float startingDifficulty = 10f;
 
-		float modifiedTime = Time.time * period / (2 * Mathf.PI);
-
-		return modifiedTime / (2 - OverallDifficultyLevel) +
-		-3 * Mathf.Cos (modifiedTime) + 3 + 4 * OverallDifficultyLevel;
+		return OverallDifficultyFactor *
+		(startingDifficulty + Time.time * difficultyIncreasePerPeriod / period
+		- periodAmplitude * Mathf.Cos (Time.time * 2 * Mathf.PI / period));
 	}
 }

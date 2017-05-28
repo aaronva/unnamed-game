@@ -13,14 +13,16 @@ public class StressorGeneratorController : MonoBehaviour
 	private float lastGeneratedTime;
 	private float nextGeneratedTime = 0;
 
-	private float currentTimeBasedDifficulty = float.MinValue;
+	private float difficultyValue = float.MinValue;
 
 //	public enum DifficultyLevel {Easy = 0, Normal = 1, Hard = 2}
 
 	// Update is called once per frame
 	void Update ()
 	{
-		currentTimeBasedDifficulty = GameManager.ComputeTimeBasedDifficulty ();
+		difficultyValue = GameManager.ComputeTimeBasedDifficulty ();
+
+		Debug.Log (difficultyValue);
 
 		if (ShouldGenerate ()) {
 			float angle = ComputeAngle ();
@@ -50,7 +52,9 @@ public class StressorGeneratorController : MonoBehaviour
 
 	private bool ShouldGenerate ()
 	{
-		// TODO determine a way to generate multiple per frame (maybe)
+		// I don't like how much framerate can affect this (effectively spawn rate is capped at framerate). 
+		// It's minor enough that finding another solution is out of scope for this project, but I should 
+		// keep it in the back of my mind for future projects.
 		return Time.time > nextGeneratedTime;
 	}
 
@@ -60,11 +64,11 @@ public class StressorGeneratorController : MonoBehaviour
 		const int minRange = 30;
 		const int midpoint = 360 / 2;
 
-		if (currentTimeBasedDifficulty >= difficultyAtFullRadius) {
+		if (difficultyValue >= difficultyAtFullRadius) {
 			return Random.Range (0, 359);
 		}
 
-		float range = (midpoint - minRange) * currentTimeBasedDifficulty / difficultyAtFullRadius + minRange;
+		float range = (midpoint - minRange) * difficultyValue / difficultyAtFullRadius + minRange;
 
 		return Random.Range (midpoint - range, midpoint + range);
 	}
@@ -72,12 +76,12 @@ public class StressorGeneratorController : MonoBehaviour
 	private float ComputeStressLevel ()
 	{
 		float smallStressorWeight = 40;
-		float mediumStressorWeight = currentTimeBasedDifficulty > 40 ? (currentTimeBasedDifficulty - 40) : 0;
-		float largeStressorWeight = currentTimeBasedDifficulty > 80 ? (currentTimeBasedDifficulty - 80) : 0;
+		float mediumStressorWeight = difficultyValue > 40 ? (difficultyValue - 40) : 0;
+		float largeStressorWeight = difficultyValue > 80 ? (difficultyValue - 80) : 0;
 
 		float totalStressorWeight = smallStressorWeight + mediumStressorWeight + largeStressorWeight;
 
-		int difficultySizeBoost = (int)currentTimeBasedDifficulty / 40;
+		int difficultySizeBoost = (int)difficultyValue / 40;
 
 		float randomGen = Random.Range (0, totalStressorWeight);
 
@@ -95,7 +99,7 @@ public class StressorGeneratorController : MonoBehaviour
 		const float varianceFactor = 0.2f;
 		const float maxBaseline = 2.5f;
 
-		float baselineTimeDelay = Mathf.Min(50 / currentTimeBasedDifficulty, maxBaseline);
+		float baselineTimeDelay = Mathf.Min(50 / difficultyValue, maxBaseline);
 //		float baselineFrequency = currentDifficulty / 50;
 
 		float minTime = baselineTimeDelay * (1 - varianceFactor);
