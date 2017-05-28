@@ -23,6 +23,7 @@ public class MainCameraController : MonoBehaviour
 		Vector3 mousePosition = GetInworldMousePosition ();
 		Vector3 targetDisplacement = ComputeNewPosition (mousePosition);
 		this.transform.position = defaultPosition + targetDisplacement;
+
 //		this.transform.ro
 //		Quaternion angularDelta = ComputeNewRotation(mousePosition);
 //		this.transform.rotation = angularDelta;

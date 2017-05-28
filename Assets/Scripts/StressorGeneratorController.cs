@@ -45,7 +45,7 @@ public class StressorGeneratorController : MonoBehaviour
 	// Skeleton to allow more logic to be put in here
 	private float ComputeInitialForce ()
 	{
-		return 200f;
+		return 140f;
 	}
 
 	private bool ShouldGenerate ()
