@@ -12,7 +12,7 @@ public class AmoebaManager : MonoBehaviour
 
 	public float MaxStressLevel = 50f;
 	// TODO remove this
-	public const float StressDecayRatio = 0.05f;
+	public const float StressDecayRatio = 0.075f;
 
 	// Percent per second
 	public const float ColorAdaptionSpeed = 1f;

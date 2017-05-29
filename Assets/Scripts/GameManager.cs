@@ -16,15 +16,16 @@ public class GameManager : MonoBehaviour
 	public AmoebaManager ProtectedAmoeba;
 	public DamageBar DamageBar;
 	public UnityEngine.UI.Text GrowthLevelText;
+	public UnityEngine.UI.Text GameOverScoreText;
 	public CanvasGroup GameOverCanvas;
 
-	public static float MaxLashoutLength = 5f;
+	public static float MaxLashoutLength = 1f;
 
 	public static float LashoutDuration { get; private set; }
 
 	public static float GrowthLevelIncrement = 10f;
 	public static float OverallDifficultyFactor = 0.5f;
-	public static GameMode CurrentGameMode;
+	public static GameMode CurrentGameMode = GameMode.Survival;
 
 	public static int GrowthLevel { get; private set; }
 
@@ -36,7 +37,7 @@ public class GameManager : MonoBehaviour
 	{
 		GameOverCanvas.alpha = 0f;
 		if (CurrentGameMode == GameMode.Survival) {
-			GrowthLevelText.GetComponent<CanvasGroup> ().alpha = 0;
+			GrowthLevelText.text = "";
 		}
 	}
 
@@ -72,9 +73,20 @@ public class GameManager : MonoBehaviour
 
 	void TriggerGameOver ()
 	{
+		const string SurvivalString = "Time: ";
+		const string GrowthString = "Size: ";
+
 		// TODO implement effects outside of this class
 		DamageBar.percent = 0;
 		gameOverTime = Time.realtimeSinceStartup;
+		if (CurrentGameMode == GameMode.Survival) {
+			float seconds = gameOverTime % 60;
+			int minutes = (int)gameOverTime / 60;
+
+			GameOverScoreText.text = SurvivalString + minutes.ToString() + ':' + seconds.ToString ("00");
+		} else if (CurrentGameMode == GameMode.Growth) {
+			GameOverScoreText.text = GrowthString + GrowthLevel.ToString ();
+		}
 	}
 
 	private static float ComputeTimeBasedDifficulty ()
