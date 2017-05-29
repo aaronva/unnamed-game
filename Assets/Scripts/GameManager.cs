@@ -1,9 +1,12 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
+	const int MainGameScene = 0;
+
 	public enum GameMode
 	{
 		Growth,
@@ -13,7 +16,7 @@ public class GameManager : MonoBehaviour
 	public AmoebaManager ProtectedAmoeba;
 	public DamageBar DamageBar;
 	public UnityEngine.UI.Text GrowthLevelText;
-	public CanvasGroup[] GameOverGroup;
+	public CanvasGroup GameOverCanvas;
 
 	public static float MaxLashoutLength = 5f;
 
@@ -29,12 +32,23 @@ public class GameManager : MonoBehaviour
 
 	private float gameOverTime = -1f;
 
+	void Start ()
+	{
+		GameOverCanvas.alpha = 0f;
+		if (CurrentGameMode == GameMode.Survival) {
+			GrowthLevelText.GetComponent<CanvasGroup> ().alpha = 0;
+		}
+	}
+
 	void Update ()
 	{
-		CurrentDifficulty = ComputeTimeBasedDifficulty();
+		CurrentDifficulty = ComputeTimeBasedDifficulty ();
 
-		GrowthLevel = (int) Mathf.Floor (ProtectedAmoeba.MaxStressLevel / GrowthLevelIncrement);
-		GrowthLevelText.text = GrowthLevel.ToString ();
+		GrowthLevel = (int)Mathf.Floor (ProtectedAmoeba.MaxStressLevel / GrowthLevelIncrement);
+		
+		if (CurrentGameMode == GameMode.Growth) {
+			GrowthLevelText.text = GrowthLevel.ToString ();
+		}
 
 		if (ProtectedAmoeba.IsLashingOut && gameOverTime < 0) {
 			LashoutDuration += Time.deltaTime;
@@ -44,7 +58,7 @@ public class GameManager : MonoBehaviour
 			} else {
 				DamageBar.percent = 1f - LashoutDuration / MaxLashoutLength;
 			}
-		} else if (gameOverTime > 0 && Time.timeScale > 0) {
+		} else if (gameOverTime > 0 && (Time.timeScale > 0 || GameOverCanvas.alpha < 1)) {
 			if (Time.timeScale > 0) {
 				float newScale = 1f - Mathf.Sqrt (Time.realtimeSinceStartup - gameOverTime);
 				Time.timeScale = Mathf.Max (newScale, 0f);
@@ -52,9 +66,7 @@ public class GameManager : MonoBehaviour
 
 			// TODO fix problem where alpha doesn't technically reach 1.0 before we stop entering this branch
 			float newAlpha = (Time.realtimeSinceStartup - gameOverTime);
-			foreach (CanvasGroup group in GameOverGroup) {
-				group.alpha = newAlpha;
-			}
+			GameOverCanvas.alpha = newAlpha;
 		}
 	}
 
@@ -85,4 +97,10 @@ public class GameManager : MonoBehaviour
 			- periodAmplitude * Mathf.Cos (Time.time * 2 * Mathf.PI / period));
 		}
 	}
+
+	public void ReturnToMainMenu ()
+	{
+		SceneManager.LoadScene (MainGameScene);
+	}
+
 }
