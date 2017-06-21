@@ -4,13 +4,6 @@ using UnityEngine;
 
 public class OrbitController : MonoBehaviour
 {
-	public enum ControlScheme
-	{
-		MousePointer,
-		Buttons
-	}
-
-	public ControlScheme controlScheme;
 	public Vector3 orbitPoint;
 	public float radius = 2.5f;
 	public float latencyFactor = 0.2f;
@@ -19,19 +12,20 @@ public class OrbitController : MonoBehaviour
 	public float angularAcceleration = 120f; // Degrees / sec ^ 2
 	public float frictionCoefficient = 0.7f;
 
-	// Might need to be computed in the future, but fixed is fine for now.
+	// Might need to be collected from camera in the future, but fixed is fine for now.
 	public int cameraHeight = 20;
 
 	private float angularVelocity = 0f;
+	private Vector3 targetPosition;
+
+	void Start () {
+		targetPosition = this.transform.position;
+	}
 
 	// Update is called once per frame
 	void Update ()
 	{
-		if (controlScheme == ControlScheme.MousePointer) {
-			calculateMousePointerAngle ();
-		} else if (controlScheme == ControlScheme.Buttons) {
-			calculateButtonsAngle ();
-		}
+		calculateAngularVelocity ();
 
 		float angularDisplacement = angularVelocity * Time.deltaTime;
 			
@@ -40,7 +34,40 @@ public class OrbitController : MonoBehaviour
 		this.transform.position = quaternion * this.transform.position.normalized * radius;
 	}
 
-	void calculateButtonsAngle ()
+	private void calculateAngularVelocity ()
+	{
+		if (GameManager.controlType == GameManager.ControlType.MousePosition) {
+			calculateAngularVelocityMousePosition ();
+		} else if (GameManager.controlType == GameManager.ControlType.Click) {
+			calculateAngularVelocityClick ();
+		} else if (GameManager.controlType == GameManager.ControlType.Buttons) {
+			calculateAngularVelocityButtons ();
+		}
+	}
+
+	private void calculateAngularVelocityMousePosition ()
+	{
+		Vector2 mousePosition = Input.mousePosition;
+		Vector3 targetPositionVector = getInworldPosition (mousePosition);
+
+		angularVelocity = calculateAngularDeltaSigned (targetPositionVector) / latencyFactor;
+	}
+
+	private void calculateAngularVelocityClick ()
+	{
+		if (Input.GetMouseButton(0)) {
+			Vector2 screenPosition = Input.mousePosition;
+			targetPosition = getInworldPosition (screenPosition);
+		} else if (Input.touchCount == 1) {
+			Touch touch = Input.GetTouch (0);
+			Vector2 screenPosition = touch.position;
+			targetPosition =  getInworldPosition (screenPosition);
+		}
+
+		angularVelocity = calculateAngularDeltaSigned(targetPosition) / latencyFactor;
+	}
+
+	private void calculateAngularVelocityButtons ()
 	{
 		if (Input.GetKey ("right")) {
 			angularVelocity += angularAcceleration * Time.deltaTime;
@@ -57,21 +84,7 @@ public class OrbitController : MonoBehaviour
 		}
 	}
 
-	void calculateMousePointerAngle ()
-	{
-		Vector3 targetDirectionVector = getInworldMousePosition ();
-
-		angularVelocity = computeSignedAngle (targetDirectionVector) / latencyFactor;
-	}
-
-	private Vector3 getInworldMousePosition ()
-	{
-		Vector2 mousePosition = Input.mousePosition;
-		Vector3 mouse3d = new Vector3 (mousePosition.x, mousePosition.y, cameraHeight);
-		return Camera.main.ScreenToWorldPoint (mouse3d);
-	}
-
-	float computeSignedAngle (Vector3 targetDirectionVector)
+	private float calculateAngularDeltaSigned (Vector3 targetDirectionVector)
 	{
 		float deltaAngle = Vector3.Angle (this.transform.position, targetDirectionVector);
 		Vector3 cross = Vector3.Cross (this.transform.position, targetDirectionVector);
@@ -79,5 +92,11 @@ public class OrbitController : MonoBehaviour
 			deltaAngle = -deltaAngle;
 		}
 		return deltaAngle;
+	}
+
+	private Vector3 getInworldPosition (Vector2 position)
+	{
+		Vector3 mouse3d = new Vector3 (position.x, position.y, cameraHeight);
+		return Camera.main.ScreenToWorldPoint (mouse3d);
 	}
 }

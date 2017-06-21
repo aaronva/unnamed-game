@@ -13,6 +13,13 @@ public class GameManager : MonoBehaviour
 		Survival
 	}
 
+	public enum ControlType 
+	{
+		MousePosition,
+		Click,
+		Buttons
+	}
+
 	public AmoebaManager ProtectedAmoeba;
 	public DamageBar DamageBar;
 	public UnityEngine.UI.Text GrowthLevelText;
@@ -26,6 +33,7 @@ public class GameManager : MonoBehaviour
 	public static float GrowthLevelIncrement = 10f;
 	public static float OverallDifficultyFactor = 0.5f;
 	public static GameMode CurrentGameMode = GameMode.Survival;
+	public static ControlType controlType = ControlType.Click;
 
 	public static int GrowthLevel { get; private set; }
 
@@ -39,6 +47,9 @@ public class GameManager : MonoBehaviour
 		if (CurrentGameMode == GameMode.Survival) {
 			GrowthLevelText.text = "";
 		}
+
+		Time.timeScale = 1;
+		GameOverCanvas.interactable = false;
 	}
 
 	void Update ()
@@ -79,6 +90,7 @@ public class GameManager : MonoBehaviour
 		// TODO implement effects outside of this class
 		DamageBar.percent = 0;
 		gameOverTime = Time.realtimeSinceStartup;
+		GameOverCanvas.interactable = true;
 		if (CurrentGameMode == GameMode.Survival) {
 			float seconds = gameOverTime % 60;
 			int minutes = (int)gameOverTime / 60;
