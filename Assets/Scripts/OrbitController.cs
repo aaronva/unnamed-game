@@ -12,8 +12,7 @@ public class OrbitController : MonoBehaviour
 	public float angularAcceleration = 120f; // Degrees / sec ^ 2
 	public float frictionCoefficient = 0.7f;
 
-	// Might need to be collected from camera in the future, but fixed is fine for now.
-	public int cameraHeight = 20;
+	public MainCameraController cameraController;
 
 	private float angularVelocity = 0f;
 	private Vector3 targetPosition;
@@ -96,7 +95,7 @@ public class OrbitController : MonoBehaviour
 
 	private Vector3 getInworldPosition (Vector2 position)
 	{
-		Vector3 mouse3d = new Vector3 (position.x, position.y, cameraHeight);
+		Vector3 mouse3d = new Vector3 (position.x, position.y, cameraController.InWorldHeight);
 		return Camera.main.ScreenToWorldPoint (mouse3d);
 	}
 }

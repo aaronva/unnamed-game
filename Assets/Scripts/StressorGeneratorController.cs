@@ -6,31 +6,27 @@ public class StressorGeneratorController : MonoBehaviour
 {
 	public GameManager GameManager;
 	public StressorController stressorTemplate;
-	public float generatedRadius = 20f;
+	public MainCameraController mainCamera;
+	public float defaultGenerateRadius = 20f;
 
-	//	private int generatedCount = 0;
-	[System.Obsolete]
-	private float lastGeneratedTime;
+
 	private float nextGeneratedTime = 0;
 
-	// Update is called once per frame
 	void Update ()
 	{
 		if (ShouldGenerate ()) {
 			float angle = ComputeAngle ();
+			float stressLevel = ComputeStressLevel ();
+
 			Quaternion quaternion = Quaternion.AngleAxis (angle, Vector3.up);
 
-			Vector3 spawnPoint = quaternion * new Vector3 (generatedRadius, 0, generatedRadius);
-
-			float stressLevel = ComputeStressLevel ();
+			float generationRadius = mainCamera.MaxDistanceOutsideOfCamera;
+			Vector3 spawnPoint = quaternion * new Vector3 (generationRadius, 0, generationRadius);
 
 			StressorController stressor = (StressorController)Instantiate (stressorTemplate, spawnPoint, Quaternion.identity);
 
 			stressor.applyForce (spawnPoint.normalized * -1 * ComputeInitialForce ());
 			stressor.setStressLevel (stressLevel);
-
-			// Kill the created stressors in 3 seconds.
-			Destroy (stressor.gameObject, 3);
 
 			nextGeneratedTime = ComputeNextGenerationTime ();
 		}

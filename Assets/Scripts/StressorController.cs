@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class StressorController : MonoBehaviour
 {
-	public float stressLevel = 10;
+	public float stressLevel = 10f;
 
 	public GameObject creator = null;
 
@@ -21,12 +21,17 @@ public class StressorController : MonoBehaviour
 
 	private void updateSize ()
 	{	
-		this.transform.localScale = Vector3.one * (Mathf.Log (1 + stressLevel / 50) + 0.5f);
+		this.transform.localScale = Vector3.one * ComputeSize (stressLevel);
 	}
 
 	public void applyForce (Vector3 force)
 	{
 		Rigidbody rb = GetComponent<Rigidbody> ();
 		rb.AddForce (force);
+	}
+
+	public static float ComputeSize (float stressLevel)
+	{
+		return Mathf.Log (1 + stressLevel / 50) + 0.5f;
 	}
 }
